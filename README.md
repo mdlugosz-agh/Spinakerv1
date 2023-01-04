@@ -1,4 +1,4 @@
-# Template: template-ros
+# Template: Spinaker v1
 
 This template provides a boilerplate repository
 for developing ROS-based software in Duckietown.

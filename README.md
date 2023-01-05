@@ -45,3 +45,15 @@ a launcher will be created for it. For example, the script file
 
 When launching a new container, you can simply provide `dt-launcher-my-launcher` as
 command.
+
+### 6. Using
+Create local docker image
+`dts build devel -f`
+
+Run local container from local docker image (with connect to ROS Master to localhost)
+`scripts/container_local_start.sh`
+
+Run local container from local docker image (with connect to ROS Master on robot)
+`scripts/container_duciebot_start.sh <duckiebot name ex. d3>`
+
+*use source because enviroment variable have to be set

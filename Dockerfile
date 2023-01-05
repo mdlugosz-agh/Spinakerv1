@@ -8,7 +8,8 @@ ARG ICON="cubes"
 # ==================================================>
 # ==> Do not change the code below this line
 ARG ARCH=arm64v8
-ARG DISTRO=ente
+ARG DISTRO=daffy
+#ARG DISTRO=ente
 ARG BASE_TAG=${DISTRO}-${ARCH}
 ARG BASE_IMAGE=dt-ros-commons
 ARG LAUNCHER=default

@@ -1,7 +1,9 @@
 <launch>
 
+    <!-- Node name -->
     <arg name="node_name" value="lateral_position_error_node" />
 
+    <!-- Vehicle name -->
     <arg name="veh" value="$(env VEHICLE_NAME)" />
 
     <group ns="$(arg veh)">  

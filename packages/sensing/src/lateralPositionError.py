@@ -5,7 +5,6 @@ import cv_bridge
 import numpy as np
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32
-from duckietown_msgs import msg
 
 class LateralPositionError:
     def __init__(self):

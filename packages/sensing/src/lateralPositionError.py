@@ -47,10 +47,11 @@ class LateralPositionError:
             upper_mask = cv2.inRange(hsv, lower2, upper2)
             
             full_mask = lower_mask + upper_mask
-            #result = cv2.bitwise_and(image, image, mask=full_mask)
+            result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
             # Cut image, only consider 75% of image area
             h, w, _ = image.shape
+           
             search_top = int(3*h/4)
             search_bot = int(search_top + 40)
             full_mask[0:search_top, 0:w] = 0
@@ -75,8 +76,12 @@ class LateralPositionError:
             cv2.putText(image, "Error= " + str(self.error), 
             org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
                 thickness=1, lineType=cv2.LINE_AA)
-            out_image = self.cvbridge.cv2_to_compressed_imgmsg(image, 'jpg')
+
+            ww = np.concatenate( ([image], [result_mask]),axis=0).reshape((960, 640, 3))
+            
+            out_image = self.cvbridge.cv2_to_compressed_imgmsg(ww, 'jpg')
             out_image.header.stamp = rospy.Time.now()
+
             self.image_pub.publish(out_image)
            
 

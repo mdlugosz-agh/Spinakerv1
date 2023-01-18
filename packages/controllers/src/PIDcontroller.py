@@ -23,6 +23,7 @@ class PIDController:
             # Controller
             self.twist.v = 0.4
             self.twist.omega = (8.0/3.2) * (-float(msg.data)/100) 
+            self.twist.header.stamp = rospy.Time.now()
             
             # Publish controlll
             self.control_pub.publish(self.twist)

@@ -1,0 +1,19 @@
+<launch>
+
+    <!-- Node name -->
+    <arg name="node_name" value="datasync_node" />
+
+    <!-- Vehicle name -->
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+
+    <group ns="$(arg veh)">  
+        <!-- Visualisation node -->
+        <node pkg="datasync" type="dataSync.py" name="$(arg node_name)" output="screen">
+            
+            <remap from="~in/image/compressed"  to="/$(arg veh)/camera_node/image/compressed" />
+            <remap from="~in/car_cmd"           to="/$(arg veh)/joy_mapper_node/car_cmd" />
+
+        </node>
+    </group>
+
+</launch>

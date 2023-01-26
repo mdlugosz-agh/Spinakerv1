@@ -4,13 +4,13 @@ IMAGE_NAME="duckietown/spinakerv1:v2-amd64"
 
 if [ -n "$1" ]
 then 
-    echo "Run local container on duckiebot name: ${1}"
+    echo "Run container on host and connect to duckiebot name: ${1}"
 
     # Set enviromental varaibles
     source set_env.sh ${1}
 
     # Start container
-    docker run -it --rm \
+    docker run --runtime=nvidia -it --rm \
         -v ${PWD}:/code/catkin_ws/src/SpinakerV1 \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \
@@ -20,7 +20,7 @@ then
         ${IMAGE_NAME} \
         /bin/bash
 else
-    echo "Run local container on computer"
+    echo "Run container on host"
 
     # Set enviromental varaibles
     source set_env.sh

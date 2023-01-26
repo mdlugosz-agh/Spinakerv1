@@ -29,6 +29,9 @@ ARG BASE_TAG
 ARG BASE_IMAGE
 ARG LAUNCHER
 
+# Uprgrade pip
+RUN pip install -U pip
+
 # check build arguments
 RUN dt-build-env-check "${REPO_NAME}" "${MAINTAINER}" "${DESCRIPTION}"
 

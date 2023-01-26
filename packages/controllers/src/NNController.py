@@ -6,7 +6,7 @@ import numpy as np
 import cv_bridge
 import cv2
 
-from tensorflow.python.keras.models import load_model
+import tensorflow as tf
 
 class NNController:
     def __init__(self):
@@ -17,45 +17,44 @@ class NNController:
         
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
+        self.img_pub = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
+
+        # store the session object from the main thread
+        # self.session = tf.compat.v1.keras.backend.get_session()
 
         # Model NN
-        self.model = load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-e30-b5.h5')
+        self.model = tf.keras.models.load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-2022-01-25-01-cv2.h5')
 
         self.twist = Twist2DStamped()
         
-        self.rate = rospy.Rate(30)
-
         # Clean up before stop
         rospy.on_shutdown(self.cleanup)
 
     def callback(self, msg) -> None:
-        #global sess
-        #global graph
-
         try:
 
             # Read image from node
-            image = np.asarray(self.cvbridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8'))
+            img_org = self.cvbridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            image = img_org
 
             # Crop image
-            image = image[220:500, :, :]
+            image = image[300:500, :, :]
 
             # Filter image
             image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
             image = cv2.GaussianBlur(image, (3, 3), 0)
 
             # Resize image to size which is recomended by NVIDIA
-            image = cv2.resize(image, (200, 66))
-            # image = (image - np.min(image)) / (np.max(image) - np.min(image))
-
+            image = cv2.resize(image, (80, 60))
+            image = (image - np.min(image)) / (np.max(image) - np.min(image))
 
             # Compute controll omega
-            #with graph.as_default():
-            #    set_session(sess)
-            self.twist.omega = self.model.predict(np.expand_dims(image, axis=0))
-                
+            
+            #tf.compat.v1.keras.backend.set_session(self.session)
+            self.twist.omega = self.model.predict(np.expand_dims(image, axis=0), verbose=0)
+
             # Set linear speed
-            self.twist.v = 0.15
+            self.twist.v = 0.4
             # Set timestamp
             self.twist.header.stamp = rospy.Time.now()
             
@@ -63,14 +62,14 @@ class NNController:
             self.control_pub.publish(self.twist)
 
             # Publish transformed image
-            self.image_pub = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
-
-            out_image = self.cvbridge.cv2_to_compressed_imgmsg(image, 'jpg')
+            # Add error value to image
+            cv2.putText(img_org, 
+                "Controll= " + str(self.twist.omega), 
+                org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
+                thickness=1, lineType=cv2.LINE_AA)
+            out_image = self.cvbridge.cv2_to_compressed_imgmsg(img_org, 'jpg')
             out_image.header.stamp = rospy.Time.now()
-
-            self.image_pub.publish(out_image)
-
-            rospy.loginfo("twis.omega: {}".format(self.twist.omega))
+            self.img_pub.publish(out_image)
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
@@ -82,10 +81,6 @@ class NNController:
         rospy.sleep(1)
         rospy.loginfo("Stop NNController")
         pass
-
-#sess = tf.Session()
-#graph = tf.get_default_graph()
-#set_session(sess)
 
 # Create node
 rospy.init_node("nn_controller_node")

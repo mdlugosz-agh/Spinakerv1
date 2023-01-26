@@ -13,6 +13,8 @@ class PIDController:
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
         self.twist = Twist2DStamped()
+        
+        self.rate = rospy.Rate(10)
 
         # Clean up before stop
         rospy.on_shutdown(self.cleanup)

@@ -13,12 +13,13 @@ import csv
 
 # Check input parameters
 try:
-    rosbag_path     = sys.argv[1]
-    car_cmd_topic   = sys.argv[2]
-    image_topic     = sys.argv[3]
-    data_save_path = sys.argv[4]
+    rosbag_path_left    = sys.argv[1]
+    rosbag_path_right   = sys.argv[2]
+    car_cmd_topic       = sys.argv[3]
+    image_topic         = sys.argv[4]
+    data_save_path      = sys.argv[5]
 except Exception:
-    print("prepareDataForNN <rosbag_file>  <car_cmd topic name> <image compressed topic name> <imag save path>")
+    print("prepareDataForNN <rosbag_file-left> <rosbag_file-right>  <car_cmd topic name> <image compressed topic name> <imag save path>")
     exit(0)
 
 @dataclass
@@ -29,35 +30,37 @@ class CarCmdImage:
 
 # Read cmd_car messages
 car_cmd_messages = {}
-with rosbag.Bag(rosbag_path, 'r') as bag:
-    
-    # Iterate by car_cmd messages and creat dist of data
-    for topic, msg, t in bag.read_messages(topics=[car_cmd_topic]) :
-        car_cmd_messages[msg.header.stamp] = CarCmdImage( v=msg.v, omega=msg.omega)
+# Image counter
+img_count = 0
 
-    # Image format name
-    img_file_number_name_format = "%0{}d.png".format(len(str(len(car_cmd_messages))))
-    # Image counter
-    img_count = 0
-    bridge = CvBridge()
-
-    # Create data folder
-    os.makedirs(data_save_path + "/img", exist_ok=True)
-
-    # Iterate by image messages and save in file images which has equivalent car_cmd messages
-    for topic, msg, t in bag.read_messages(topics=[image_topic]):
+for rosbag_path in [rosbag_path_left, rosbag_path_right]:
+    with rosbag.Bag(rosbag_path, 'r') as bag:
         
-        if car_cmd_messages.get(msg.header.stamp)!=None:
-            try:
-                # Set image name
-                image_file_name = img_file_number_name_format % img_count
-                # Save image in folder
-                cv2.imwrite(data_save_path + "/img/" + image_file_name, bridge.compressed_imgmsg_to_cv2(msg))
-                img_count+=1
-                # Set image name for car_cmd message
-                car_cmd_messages[msg.header.stamp].image_name = "img/" + image_file_name
-            except Exception as e:
-                print("Error: {0}".format(e))
+        # Iterate by car_cmd messages and creat dist of data
+        for topic, msg, t in bag.read_messages(topics=[car_cmd_topic]) :
+            car_cmd_messages[msg.header.stamp] = CarCmdImage( v=msg.v, omega=msg.omega)
+
+        # Image format name
+        img_file_number_name_format = "%0{}d.jpg".format(len(str(len(car_cmd_messages))))
+        bridge = CvBridge()
+
+        # Create data folder
+        os.makedirs(data_save_path + "/img", exist_ok=True)
+
+        # Iterate by image messages and save in file images which has equivalent car_cmd messages
+        for topic, msg, t in bag.read_messages(topics=[image_topic]):
+            
+            if car_cmd_messages.get(msg.header.stamp)!=None:
+                try:
+                    # Set image name
+                    image_file_name = img_file_number_name_format % img_count
+                    # Save image in folder
+                    cv2.imwrite(data_save_path + "/img/" + image_file_name, bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8'))
+                    img_count+=1
+                    # Set image name for car_cmd message
+                    car_cmd_messages[msg.header.stamp].image_name = "img/" + image_file_name
+                except Exception as e:
+                    print("Error: {0}".format(e))
     
 # Iterate by car_cmd dictionary and crete CSV file 
 # filename, v, omega

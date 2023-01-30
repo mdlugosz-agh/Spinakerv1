@@ -13,7 +13,5 @@ echo "Run tensorflow-gpu-jupyter container on port: ${PORT}"
 docker run --runtime=nvidia -it --rm \
     -v ${PWD}:/tf/SpinakerV1 \
     -v ${PWD}/../SpinakerV1Data:/tf/SpinakerV1Data \
-    --privileged \
-    --network host \
     -p 8888:8888 \
     spinaker_tensorflow:gpu-jupyter

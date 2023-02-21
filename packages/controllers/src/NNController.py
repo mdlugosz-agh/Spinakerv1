@@ -17,13 +17,10 @@ class NNController:
         
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-        self.img_pub = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
-
-        # store the session object from the main thread
-        # self.session = tf.compat.v1.keras.backend.get_session()
+        self.img_pub = rospy.Publisher('~image1/out/compressed', CompressedImage, queue_size=1)
 
         # Model NN
-        self.model = tf.keras.models.load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-2022-01-25-01-cv2.h5')
+        self.model = tf.keras.models.load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-v1.h5')
 
         self.twist = Twist2DStamped()
         
@@ -35,23 +32,22 @@ class NNController:
 
             # Read image from node
             img_org = self.cvbridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            image = img_org
-
+            
+            # Image processing            
             # Crop image
-            image = image[300:500, :, :]
+            image = img_org[300:500, :, :]
 
             # Filter image
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
             image = cv2.GaussianBlur(image, (3, 3), 0)
 
-            # Resize image to size which is recomended by NVIDIA
+            # Resize image
             image = cv2.resize(image, (80, 60))
+            # Normalize imega for NN  
             image = (image - np.min(image)) / (np.max(image) - np.min(image))
 
-            # Compute controll omega
-            
-            #tf.compat.v1.keras.backend.set_session(self.session)
-            self.twist.omega = self.model.predict(np.expand_dims(image, axis=0), verbose=0)
+            # Predict controll omega
+            self.twist.omega = float(self.model.predict(np.expand_dims(image, axis=0), verbose=0))
 
             # Set linear speed
             self.twist.v = 0.4
@@ -73,7 +69,7 @@ class NNController:
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
-           
+    
     def cleanup(self):
         # Send stop command
         self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))

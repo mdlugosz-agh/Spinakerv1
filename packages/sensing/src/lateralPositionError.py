@@ -56,7 +56,7 @@ class LateralPositionError:
             search_bot = int(search_top + 40)
             full_mask[0:search_top, 0:w] = 0
             full_mask[search_bot:h, 0:w] = 0
-
+            
             # Find center of mass detected red line
             M = cv2.moments(full_mask)
             cx = 0.0
@@ -71,12 +71,15 @@ class LateralPositionError:
             
             # Publish transformed image
             # Add circle in point of center of mass
-            cv2.circle(image, (int(cx), int(cy)), 20, (0,255,0), -1)
+            cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
             # Add error value to image
             cv2.putText(image, "Error= " + str(self.error), 
             org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
                 thickness=1, lineType=cv2.LINE_AA)
-
+            
+            cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
+            cv2.line(result_mask, (0, search_top), (640, search_top), (0, 255, 0), 2)
+            cv2.line(result_mask, (0, search_bot), (640, search_bot), (0, 255, 0), 2)
             ww = np.concatenate( ([image], [result_mask]),axis=0).reshape((960, 640, 3))
             
             out_image = self.cvbridge.cv2_to_compressed_imgmsg(ww, 'jpg')

@@ -1,5 +1,6 @@
 #!/bin/bash
 # -u $(id -u):$(id -g)
+# --runtime=nvidia
 
 if [ -n "$1" ]
 then
@@ -10,8 +11,8 @@ fi
 
 echo "Run tensorflow-gpu-jupyter container on port: ${PORT}"
 
-docker run --runtime=nvidia -it --rm \
+docker run --gpus all -it --rm \
     -v ${PWD}:/tf/SpinakerV1 \
     -v ${PWD}/../SpinakerV1Data:/tf/SpinakerV1Data \
     -p 8888:8888 \
-    spinaker_tensorflow:gpu-jupyter
+    spinaker_tensorflow:latest-gpu-jupyter

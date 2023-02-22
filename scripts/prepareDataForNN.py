@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 Script export from rosbag file data as car_cmd.v, car_cmd.omega and image from camera
-Usage: prepareDataForNN <rosbag_file>  <car_cmd topic name> <image compressed topic name> <imag save path>
+Usage: prepareDataForNN <rosbag_file 1> <rosbag_file 2>  <car_cmd topic name> <image compressed topic name> <imag save path>
 '''
 import rosbag
 import sys

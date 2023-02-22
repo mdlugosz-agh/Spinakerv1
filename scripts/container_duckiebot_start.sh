@@ -1,17 +1,21 @@
 #!/bin/bash
 
 IMAGE_NAME="duckietown/spinakerv1:v2-arm64v8"
+RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
+
+RED='\033[0;32m'
+NC='\033[0m' # No Color
 
 if [ -v "$1" ]
 then 
-    echo "Usage container_duckie_start.sh <duckiebot name>"
+    echo -e "Usage container_duckie_start.sh <duckiebot name>"
     exit 1
 fi
 
-echo "Run remote container on duckiebot name: ${1}"
+echo -e "\n*** Run remote container on duckiebot name: ${RED}${1}${NC}***\n"
 
 # Set enviromental varaibles
-source scripts/set_env.sh ${1}
+source "${RUN_PATH}/set_env.sh"
 
 # Start container
 docker -H "${1}.local" \

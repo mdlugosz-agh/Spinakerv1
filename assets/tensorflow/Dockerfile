@@ -20,7 +20,6 @@ USER user
 
 WORKDIR /code
 
-# build: docker build -t spinaker_tensorflow:gpu --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .
+# build: docker build -t spinaker_tensorflow:latest-gpu-jupyter --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .
 
-# build: docker build -t spinaker_tensorflow:gpu-jupyter --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) .
 # https://vsupalov.com/docker-shared-permissions/

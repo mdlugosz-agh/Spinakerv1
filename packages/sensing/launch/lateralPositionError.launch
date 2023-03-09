@@ -6,10 +6,17 @@
     <!-- Vehicle name -->
     <arg name="veh" value="$(env VEHICLE_NAME)" />
 
+    <!-- Color filter definition -->
+    <arg name="color_line" value="red" />
+
     <group ns="$(arg veh)">  
         <!-- Line detector node -->
-        <node pkg="sensing" type="lateralPositionError.py" name="$(arg node_name)" output="screen">
+        <node pkg="sensing" type="lateralPositionError.py" name="$(arg node_name)" output="screen" required="true">
+            
             <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
+            
+            <!-- Color filter load-->
+            <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
         </node>
     </group>
 

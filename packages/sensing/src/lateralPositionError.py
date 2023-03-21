@@ -10,18 +10,31 @@ class LateralPositionError:
     def __init__(self):
         self.cvbridge = cv_bridge.CvBridge()
 
+        self.color_line_mask = {
+            'lower1' : np.array(rospy.get_param("~color")['lower1']),
+            'upper1' : np.array(rospy.get_param("~color")['upper1']),
+            'lower2' : np.array(rospy.get_param("~color")['lower2']),
+            'upper2' : np.array(rospy.get_param("~color")['upper2'])}
+
         # Subscribe to image topic
         self.image_sub = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
-        # Lateral error
-        self.error_pub = rospy.Publisher('~error/lateral', Float32, queue_size=1)
+        # Lateral error, index 0 - raw value error, 1 - normalised value error
+        self.publisher_error = {
+            'raw'     : rospy.Publisher('~error/raw/lateral', Float32, queue_size=1),
+            'norm'    : rospy.Publisher('~error/norm/lateral', Float32, queue_size=1)
+        }
+
 
         # Transformed image
         self.image_pub = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
 
         # Messages
-        self.error = Float32()
+        self.error = {'raw' : None, 'norm' : None}
+
+        self.normalize_factor = float(rospy.get_param('~normalize_factor', 0.0))
+        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
 
         rospy.loginfo("Follow line color: {0}".format(rospy.get_param("~color")['name']))
 
@@ -39,12 +52,12 @@ class LateralPositionError:
             # Find follow line
             #lower boundary
             lower_mask = cv2.inRange(hsv, 
-                                     np.array(rospy.get_param("~color")['lower1']), 
-                                     np.array(rospy.get_param("~color")['upper1']))
+                                     self.color_line_mask['lower1'], 
+                                     self.color_line_mask['upper1'])
             # upper boundary
             upper_mask = cv2.inRange(hsv, 
-                                     np.array(rospy.get_param("~color")['lower2']), 
-                                     np.array(rospy.get_param("~color")['upper2']))
+                                     self.color_line_mask['lower2'], 
+                                     self.color_line_mask['upper2'])
             
             full_mask = lower_mask + upper_mask
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
@@ -65,16 +78,25 @@ class LateralPositionError:
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
 
-            # Publish error
-            self.error = cx - w/2
-            self.error_pub.publish(self.error)
             
+            self.error['raw'] = cx - w/2
+            self.error['norm'] = self.normalize_factor * self.error['raw']
+
+            # Publish error
+            self.publisher_error['raw'].publish(Float32(self.error['raw']))
+            self.publisher_error['norm'].publish(Float32(self.error['norm']))
+
             # Publish transformed image
             # Add circle in point of center of mass
             cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
+            
             # Add error value to image
-            cv2.putText(image, "Error= " + str(self.error), 
-            org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
+            cv2.putText(image, "Error= " + str(self.error['raw']), 
+                org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
+                thickness=1, lineType=cv2.LINE_AA)
+            
+            cv2.putText(image, "Error normalize= " + str(self.error['norm']), 
+                org=(10,40), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
                 thickness=1, lineType=cv2.LINE_AA)
             
             cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
@@ -86,7 +108,6 @@ class LateralPositionError:
             out_image.header.stamp = rospy.Time.now()
 
             self.image_pub.publish(out_image)
-           
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

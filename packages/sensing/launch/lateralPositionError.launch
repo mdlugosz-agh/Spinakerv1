@@ -7,7 +7,8 @@
     <arg name="veh" value="$(env VEHICLE_NAME)" />
 
     <!-- Color filter definition -->
-    <arg name="color_line" value="red" />
+    <arg name="color_line" default="red" />
+
 
     <group ns="$(arg veh)">  
         <!-- Line detector node -->
@@ -17,6 +18,9 @@
             
             <!-- Color filter load-->
             <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
+        
+            <!-- Color filter definition -->
+            <param name="normalize_factor" value="0.0031" type="double" />
         </node>
     </group>
 

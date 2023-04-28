@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
+
 import rospy
 import cv2
 import cv_bridge
 import numpy as np
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32
+from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
-class LateralPositionError:
-    def __init__(self):
+class LateralPositionError(DTROS):
+
+    def __init__(self, node_name):
+        super(LateralPositionError, self).__init__(
+            node_name=node_name,
+            node_type=NodeType.PERCEPTION
+        )
+
         self.cvbridge = cv_bridge.CvBridge()
 
         self.color_line_mask = {
@@ -17,29 +25,30 @@ class LateralPositionError:
             'upper2' : np.array(rospy.get_param("~color")['upper2'])}
 
         # Subscribe to image topic
-        self.image_sub = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
         # Lateral error, index 0 - raw value error, 1 - normalised value error
-        self.publisher_error = {
+        self.pub_error = {
             'raw'     : rospy.Publisher('~error/raw/lateral', Float32, queue_size=1),
             'norm'    : rospy.Publisher('~error/norm/lateral', Float32, queue_size=1)
         }
 
 
         # Transformed image
-        self.image_pub = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
+        self.pub_image = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
 
         # Messages
         self.error = {'raw' : None, 'norm' : None}
 
-        self.normalize_factor = float(rospy.get_param('~normalize_factor', 0.0))
-        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
+        # Normalization factor
+        self.normalize_factor = DTParam(
+            '~normalize_factor',
+            param_type=ParamType.FLOAT)
+
+        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor.value))
 
         rospy.loginfo("Follow line color: {0}".format(rospy.get_param("~color")['name']))
-
-        # Clean up before stop
-        rospy.on_shutdown(self.cleanup)
 
     def callback(self, msg) -> None:
         try:
@@ -80,11 +89,11 @@ class LateralPositionError:
 
             
             self.error['raw'] = cx - w/2
-            self.error['norm'] = self.normalize_factor * self.error['raw']
+            self.error['norm'] = self.normalize_factor.value * self.error['raw']
 
             # Publish error
-            self.publisher_error['raw'].publish(Float32(self.error['raw']))
-            self.publisher_error['norm'].publish(Float32(self.error['norm']))
+            self.pub_error['raw'].publish(Float32(self.error['raw']))
+            self.pub_error['norm'].publish(Float32(self.error['norm']))
 
             # Publish transformed image
             # Add circle in point of center of mass
@@ -107,17 +116,12 @@ class LateralPositionError:
             out_image = self.cvbridge.cv2_to_compressed_imgmsg(ww, 'jpg')
             out_image.header.stamp = rospy.Time.now()
 
-            self.image_pub.publish(out_image)
+            self.pub_image.publish(out_image)
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 
-    def cleanup(self):
-        pass
         
-# Create node
-rospy.init_node("lateral_position_error_node")
-node = LateralPositionError()
-
-while not rospy.is_shutdown():
+if __name__ == '__main__':
+    some_name_node = LateralPositionError(node_name='lateral_position_error_node')
     rospy.spin()

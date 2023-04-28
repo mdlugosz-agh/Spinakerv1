@@ -1,26 +1,25 @@
 <launch>
 
-    <!-- Node name -->
-    <arg name="node_name" value="lateral_position_error_node" />
-
-    <!-- Vehicle name -->
     <arg name="veh" value="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="sensing"/>
+    <arg name="node_name" default="lateral_position_error_node" />
 
     <!-- Color filter definition -->
-    <arg name="color_line" default="red" />
+    <arg name="color_line" default="white" doc="Line color"/>
 
 
     <group ns="$(arg veh)">  
         <!-- Line detector node -->
-        <node pkg="sensing" type="lateralPositionError.py" name="$(arg node_name)" output="screen" required="true">
+
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
             
             <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
             <!-- Color filter load-->
             <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
         
-            <!-- Color filter definition -->
-            <param name="normalize_factor" value="0.0031" type="double" />
+            <!-- Normalise factor -->
+            <param name="normalize_factor" value="0.003125" type="double" />
         </node>
     </group>
 

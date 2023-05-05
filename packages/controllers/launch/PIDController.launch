@@ -8,8 +8,13 @@
     <group ns="$(arg veh)">  
         <!-- PID controller node -->
         <node pkg="controllers" type="PIDcontroller.py" name="$(arg node_name)" output="screen">
-            <remap from="~error" to="/$(arg veh)/lateral_position_error_node/error/lateral" />
+
+            <!-- Subscribe normalize error -->
+            <remap from="~error" to="/$(arg veh)/lateral_position_error_node/error/norm/lateral" />
+            
+            <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />
+        
         </node>
     </group>
 

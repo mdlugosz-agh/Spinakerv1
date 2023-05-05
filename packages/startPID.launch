@@ -1,0 +1,9 @@
+<launch>
+
+    <include file="$(find sensing)/launch/lateral_position_error_node.launch">
+         <arg name="color_line" value="white" />
+    </include>
+
+    <include file="$(find controllers)/launch/PIDController.launch"/>
+        
+</launch>

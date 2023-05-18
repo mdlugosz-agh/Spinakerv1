@@ -16,39 +16,40 @@ class LateralPositionError(DTROS):
             node_type=NodeType.PERCEPTION
         )
 
+        # Read color mask
+        self.color = DTParam('~color', param_type=ParamType.DICT)
+
+        # Convert color mask to np.array
+        self.color_line_mask = {k : np.array(v) for k, v in self.color.value.items()}
+
+        # Camera parameters
+        self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
+
+        # Normalization factor
+        self.normalize_factor = float(1.0 / (self.image_param.value['width'] / 2.0))
+
+        # Search area of followed line
+        self.search_area = DTParam('~search_area', param_type=ParamType.DICT)
+
         self.cvbridge = cv_bridge.CvBridge()
 
-        self.color_line_mask = {
-            'lower1' : np.array(rospy.get_param("~color")['lower1']),
-            'upper1' : np.array(rospy.get_param("~color")['upper1']),
-            'lower2' : np.array(rospy.get_param("~color")['lower2']),
-            'upper2' : np.array(rospy.get_param("~color")['upper2'])}
+        # Messages
+        self.error = {'raw' : None, 'norm' : None}
 
         # Subscribe to image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
-        # Lateral error, index 0 - raw value error, 1 - normalised value error
         self.pub_error = {
             'raw'     : rospy.Publisher('~error/raw/lateral', Float32, queue_size=1),
             'norm'    : rospy.Publisher('~error/norm/lateral', Float32, queue_size=1)
         }
 
-
         # Transformed image
-        self.pub_image = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
+        self.pub_debug_img = rospy.Publisher('~debug/image/out/compressed', CompressedImage, queue_size=1)
 
-        # Messages
-        self.error = {'raw' : None, 'norm' : None}
-
-        # Normalization factor
-        self.normalize_factor = DTParam(
-            '~normalize_factor',
-            param_type=ParamType.FLOAT)
-
-        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor.value))
-
-        rospy.loginfo("Follow line color: {0}".format(rospy.get_param("~color")['name']))
+        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
+        rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
 
     def callback(self, msg) -> None:
         try:
@@ -71,13 +72,9 @@ class LateralPositionError(DTROS):
             full_mask = lower_mask + upper_mask
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
-            # Cut image, only consider 75% of image area
-            h, w, _ = image.shape
-           
-            search_top = int(3*h/4)
-            search_bot = int(search_top + 40)
-            full_mask[0:search_top, 0:w] = 0
-            full_mask[search_bot:h, 0:w] = 0
+            # Cut image, only consider 75% of image area           
+            full_mask[0:self.search_area.value['top'], 0:self.image_param.value['width']] = 0
+            full_mask[self.search_area.value['bottom']:self.image_param.value['height'], 0:self.image_param.value['width']] = 0
             
             # Find center of mass detected red line
             M = cv2.moments(full_mask)
@@ -88,35 +85,45 @@ class LateralPositionError(DTROS):
                 cy = int(M['m01'] / M['m00'])
 
             
-            self.error['raw'] = cx - w/2
-            self.error['norm'] = self.normalize_factor.value * self.error['raw']
+            self.error['raw']  = cx - self.image_param.value['width']/2.0
+            self.error['norm'] = self.normalize_factor * self.error['raw']
 
             # Publish error
             self.pub_error['raw'].publish(Float32(self.error['raw']))
             self.pub_error['norm'].publish(Float32(self.error['norm']))
 
-            # Publish transformed image
-            # Add circle in point of center of mass
-            cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
-            
-            # Add error value to image
-            cv2.putText(image, "Error= " + str(self.error['raw']), 
-                org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
-                thickness=1, lineType=cv2.LINE_AA)
-            
-            cv2.putText(image, "Error normalize= " + str(self.error['norm']), 
-                org=(10,40), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
-                thickness=1, lineType=cv2.LINE_AA)
-            
-            cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
-            cv2.line(result_mask, (0, search_top), (640, search_top), (0, 255, 0), 2)
-            cv2.line(result_mask, (0, search_bot), (640, search_bot), (0, 255, 0), 2)
-            ww = np.concatenate( ([image], [result_mask]),axis=0).reshape((960, 640, 3))
-            
-            out_image = self.cvbridge.cv2_to_compressed_imgmsg(ww, 'jpg')
-            out_image.header.stamp = rospy.Time.now()
+            # DEBUG
+            if self.pub_debug_img.anybody_listening():
+                
+                # Add circle in point of center of mass
+                cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
+                
+                # Add error value to image
+                cv2.rectangle(image, (0, 0), (self.image_param.value['width'], 50), (255,255,255), -1)
 
-            self.pub_image.publish(out_image)
+                cv2.putText(image, "Error= " + str(self.error['raw']), 
+                    org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,0,0), fontScale=0.5, 
+                    thickness=1, lineType=cv2.LINE_AA)
+                
+                cv2.putText(image, "Error normalize= " + str( "%.3f" % self.error['norm']), 
+                    org=(10,40), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,0,0), fontScale=0.5, 
+                    thickness=1, lineType=cv2.LINE_AA)
+                
+                cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
+                cv2.line(result_mask, 
+                    (0, self.search_area.value['top']), (self.image_param.value['width'], self.search_area.value['top']), 
+                    (0, 255, 0), 2)
+                cv2.line(result_mask, 
+                    (0, self.search_area.value['bottom']), (self.image_param.value['width'], self.search_area.value['bottom']), 
+                    (0, 255, 0), 2)
+                
+                # Message data
+                debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image], [result_mask]),axis=0).reshape(
+                    (2*self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
+                debug_out_image.header.stamp = rospy.Time.now()
+                
+                # Publish transformed image
+                self.pub_debug_img.publish(debug_out_image)
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

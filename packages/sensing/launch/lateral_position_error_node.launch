@@ -5,7 +5,7 @@
     <arg name="node_name" default="lateral_position_error_node" />
 
     <!-- Color filter definition -->
-    <arg name="color_line" default="white" doc="Line color"/>
+    <arg name="color_line" default="yellow" doc="Line color"/>
 
 
     <group ns="$(arg veh)">  
@@ -15,11 +15,12 @@
             
             <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
+            <!-- Load default values -->
+            <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/default.yaml" />
+
             <!-- Color filter load-->
             <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
-        
-            <!-- Normalise factor -->
-            <param name="normalize_factor" value="0.003125" type="double" />
+
         </node>
     </group>
 

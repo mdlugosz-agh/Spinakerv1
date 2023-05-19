@@ -1,19 +1,22 @@
 <launch>
-    <!-- Node name -->
-    <arg name="node_name" value="pid_controller_node" />
-
-    <!-- Vehicle name-->
+    
     <arg name="veh" value="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="controllers"/>
+    <arg name="node_name" default="pid_controller_node" />
 
     <group ns="$(arg veh)">  
         <!-- PID controller node -->
-        <node pkg="controllers" type="PIDcontroller.py" name="$(arg node_name)" output="screen">
+
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
 
             <!-- Subscribe normalize error -->
             <remap from="~error" to="/$(arg veh)/lateral_position_error_node/error/norm/lateral" />
             
             <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />
+
+            <!-- Load default values -->
+            <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />
         
         </node>
     </group>

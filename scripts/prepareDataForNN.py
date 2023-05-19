@@ -19,7 +19,7 @@ try:
     image_topic         = sys.argv[4]
     data_save_path      = sys.argv[5]
 except Exception:
-    print("prepareDataForNN <rosbag_file-left> <rosbag_file-right>  <car_cmd topic name> <image compressed topic name> <imag save path>")
+    print("prepareDataForNN <rosbag_file-left> <rosbag_file-right>  <car_cmd topic name> <image compressed topic name> <img save path>")
     exit(0)
 
 @dataclass

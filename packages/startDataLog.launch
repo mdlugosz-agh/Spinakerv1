@@ -1,9 +1,11 @@
 <launch>
 
-    <include file="$(find sensing)/launch/lateralPositionError.launch"/>
+    <arg name="color_line" default="yellow" />
 
-    <include file="$(find controllers)/launch/PIDController.launch"/>
-    
+    <include file="packages/startPID.launch">
+        <arg name="color_line" value="$(arg color_line)" />
+    </include>
+
     <include file="$(find datasync)/launch/dataSync.launch"/>
     
 </launch>

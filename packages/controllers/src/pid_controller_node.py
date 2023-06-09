@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 import rospy
+
+# import DTROS-related classes
+from numpy import rad2deg as rad2deg
+from duckietown.dtros import \
+    DTROS, \
+    DTParam, \
+    NodeType, \
+    ParamType
+
+# import messages and services
 from std_msgs.msg import Float32
 from duckietown_msgs.msg import Twist2DStamped
-from numpy import rad2deg as rad2deg
-from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
 class PIDController:
 

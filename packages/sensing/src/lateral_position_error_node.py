@@ -4,9 +4,17 @@ import rospy
 import cv2
 import cv_bridge
 import numpy as np
+
+# import DTROS-related classes
+from duckietown.dtros import \
+    DTROS, \
+    DTParam, \
+    NodeType, \
+    ParamType
+
+# import messages and services
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32
-from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
 class LateralPositionError(DTROS):
 
@@ -19,18 +27,18 @@ class LateralPositionError(DTROS):
         # Read color mask
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
-        # Convert color mask to np.array
-        self.color_line_mask = {k : np.array(v) for k, v in self.color.value.items()}
-
         # Camera parameters
         self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
-
-        # Normalization factor
-        self.normalize_factor = float(1.0 / (self.image_param.value['width'] / 2.0))
 
         # Search area of followed line
         self.search_area = DTParam('~search_area', param_type=ParamType.DICT)
 
+        # Convert color mask to np.array
+        self.color_line_mask = {k : np.array(v) for k, v in self.color.value.items()}
+        
+        # Normalization factor
+        self.normalize_factor = float(1.0 / (self.image_param.value['width'] / 2.0))
+        
         self.cvbridge = cv_bridge.CvBridge()
 
         # Messages

@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
 import rospy
+
+# import DTROS-related class
+from duckietown.dtros import \
+    DTROS, \
+    NodeType
+
+# import messages and services
 import message_filters
 from sensor_msgs.msg import CompressedImage
 from duckietown_msgs.msg import Twist2DStamped
 
-class DataSync:
+class DataSync(DTROS):
 
-    def __init__(self):
+    def __init__(self, node_name):
         
+        super(DataSync, self).__init__(
+            node_name=node_name,
+            node_type=NodeType.GENERIC
+        )
 
         # Subscribe to input image topic
         self.image_sub  = message_filters.Subscriber('~in/image/compressed', CompressedImage)
@@ -24,9 +35,6 @@ class DataSync:
 
         self.ts.registerCallback(self.callback)
 
-        # Clean up before stop
-        rospy.on_shutdown(self.cleanup)
-
     def callback(self, msg_image, msg_car_cmd) -> None:
         
         # Synchronize message image with car_cmd
@@ -35,13 +43,10 @@ class DataSync:
         # Publish synchronised messages
         self.image_pub.publish(msg_image)
         self.car_cmd_pub.publish(msg_car_cmd)
-        
-    def cleanup(self):
-        pass
 
-# Create node
-rospy.init_node("datasync_node")
-node = DataSync()
 
-while not rospy.is_shutdown():
+###################################################################################
+
+if __name__ == '__main__':
+    some_name_node = DataSync(node_name='data_sync_node')
     rospy.spin()

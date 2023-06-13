@@ -41,7 +41,7 @@ for rosbag_path in [rosbag_path_left, rosbag_path_right]:
             car_cmd_messages[msg.header.stamp] = CarCmdImage( v=msg.v, omega=msg.omega)
 
         # Image format name
-        img_file_number_name_format = "%0{}d.jpg".format(len(str(len(car_cmd_messages))))
+        img_file_number_name_format = "%0{}d.png".format(len(str(len(car_cmd_messages))))
         bridge = CvBridge()
 
         # Create data folder

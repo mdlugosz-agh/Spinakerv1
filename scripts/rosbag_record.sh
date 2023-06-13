@@ -12,7 +12,7 @@ fi
 
 if [ -z "$2" ]
 then
-    echo "Set prefix"
+    echo "Set postfix"
     exit 1
 else 
     POSTFIX=${2}
@@ -28,9 +28,9 @@ fi
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 DATE="$(date -I)"
 
-touch "${SCRIPTPATH}/../rosbag/${DATE}-${1}-${2}.txt"
+touch "${SCRIPTPATH}/../rosbag/${DATE}-${VEHICLE_NAME}-${POSTFIX}.txt"
 
 rosbag record --duration=${DURATION} \
-    -O "${SCRIPTPATH}/../rosbag/${DATE}-${1}-${2}.bag" \
-    /${VEHICLE_NAME}/datasync_node/out/image/compressed \
-    /${VEHICLE_NAME}/datasync_node/out/car_cmd
+    -O "${SCRIPTPATH}/../rosbag/${DATE}-${VEHICLE_NAME}-${POSTFIX}.bag" \
+    /${VEHICLE_NAME}/data_sync_node/out/image/compressed \
+    /${VEHICLE_NAME}/data_sync_node/out/car_cmd

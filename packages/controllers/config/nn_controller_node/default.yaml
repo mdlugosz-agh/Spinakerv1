@@ -1,6 +1,9 @@
 v_max     : 0.4
 omega_max : 8.0
 
+nn_model_path : '/code/catkin_ws/src/SpinakerV1/assets/nn_models'
+nn_model_name : 'nn_model.h5'
+
 image_crop : {
   start : 300,
   stop  : 500

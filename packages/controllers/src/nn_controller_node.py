@@ -34,6 +34,12 @@ class NNController(DTROS):
         # Image resize
         self.image_resize =  DTParam('~image_resize', param_type=ParamType.DICT)
 
+        # Neural controller model name
+        self.nn_model_path = DTParam('~nn_model_path', param_type=ParamType.STRING)
+        self.nn_model_name = DTParam('~nn_model_name', param_type=ParamType.STRING)
+        
+        rospy.loginfo(self.nn_model_path.value + '/' + self.nn_model_name.value)
+
         self.cvbridge = cv_bridge.CvBridge()
 
         # Subscribe to image topic
@@ -44,8 +50,7 @@ class NNController(DTROS):
         self.img_pub = rospy.Publisher('~image1/out/compressed', CompressedImage, queue_size=1)
 
         # Model NN
-        #self.model = tf.keras.models.load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-v1.h5')
-        self.model = tf.keras.models.load_model('/code/catkin_ws/src/SpinakerV1/assets/nn_models/model-2023-05-19.h5')
+        self.model = tf.keras.models.load_model(self.nn_model_path.value + '/' + self.nn_model_name.value)
 
         # Message to publish
         self.twist = Twist2DStamped()

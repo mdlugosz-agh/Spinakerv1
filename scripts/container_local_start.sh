@@ -16,7 +16,7 @@ then
     source "${RUN_PATH}/set_env.sh" ${1}
 
     # Start container
-    docker run --gpus all -it --rm \
+    docker run -it --rm \
         -v ${PWD}:/code/catkin_ws/src/SpinakerV1 \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \

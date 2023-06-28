@@ -19,11 +19,11 @@ what is done by automaticly by `container_local_start.sh` script.
 ### Container on host computer
 
 Create local docker image
-`dts devel build -f`
+`dts devel build -f -a amd64`
 This command create docker container on host computer (architecture amd64)
 
 Run local container from local docker image (with connect to ROS Master running on localhost)
-`scripts/container_local_start.sh`
+`scripts/container_local_start.sh <duckiebot name ex. d3>`
 
 ### Container on robot
 
@@ -35,7 +35,7 @@ This command create docker container on host computer (architecture arm64v8)
 
 Run remote container from remote docker image (on robot)
 
-`scripts/container_duciebot_start.sh <duckiebot name ex. d3>`
+`scripts/container_duckiebot_start.sh <duckiebot name ex. d3>`
 
 ### Running
 
@@ -54,11 +54,15 @@ To do this, in next console window set enviromental variables
 
 next run program `rqt`.
 
+Another way to check how duckiebot work is used `rqt` program running on duckiebot. It can be done by executing command:
+
+`dts start_gui_tools <duckiebot name ex. d3>`
+
 ## Login data
 
 From inside container execute command
 
-`roslanuch packages/startDataLog.lanuch`
+`roslanuch packages/startDataLog.lanuch veh:=<duckiebot name ex. d3> color_line:=<defaul: yellow>`
 
 In next console window set enviromental variable
 
@@ -66,9 +70,15 @@ In next console window set enviromental variable
 
 and execute logging data command
 
-`rosbag record --duration=60 -O <log filename>.bag /<duckiebot name ex. d3>/datasync_node/out/image/compressed /<duckiebot name ex. d3>/datasync_node/out/car_cmd`
+`rosbag record --duration=60 -O <log filename>.bag /<duckiebot name ex. d3>/data_sync_node/out/image/compressed /<duckiebot name ex. d3>/data_sync_node/out/car_cmd`
 
 The file `<log filename>.bag` will be contain logged data.
+
+Example:
+
+`rosbag record --duration=60 -O 2023-01-23-d3-red1-left-v04.bag /d3/data_sync_node/out/image/compressed /d3/data_sync_node/out/car_cmd `
+
+The file `<2023-01-23-d3-red1-left-v04.bag>.bag` will be contain logged data.
 
 The data from `datasync` topic are synchronised, for each image frame exist one value of angular and linera speed.
 
@@ -76,7 +86,12 @@ The data from `datasync` topic are synchronised, for each image frame exist one 
 
 Before we start use our logged data to learn neural network we have to extract them from rosbag file. It can be one by running script:
 
-`scripts/prepareDataForNN.py <rosbag file name 1> <rosbag file name 2> /<duckiebot name ex. d3>/datasync_node/out/car_cmd /<duckiebot name ex. d3>/datasync_node/out/image/compressed <folder to save results>`
+`scripts/prepareDataForNN.py <rosbag file name 1> <rosbag file name 2> /<duckiebot name ex. d3>/data_sync_node/out/car_cmd /<duckiebot name ex. d3>/data_sync_node/out/image/compressed <folder to save results>`
+
+Example (order of topics have to be preserved):
+
+`./scripts/prepareDataForNN.py ../SpinakerV1Data/2023-06-28-d3-yellow-left-v04.bag ../SpinakerV1Data/2023-06-28-d3-yellow-right-v04.bag /d3/data_sync_node/out/car_cmd /d3/data_sync_node/out/image/compressed  ../SpinakerV1Data/2023-06-28-yellow/`
+
 
 As results script extract images from rosbag to folder `img/` and create csv file data.csv which contains columns like:
 

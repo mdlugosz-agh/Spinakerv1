@@ -7,7 +7,7 @@ RED='\033[0;32m'
 NC='\033[0m' # No Color
 
 # If Qt application do not start execute command belov:
-# xhost +local:root
+xhost +local:root
 # https://askubuntu.com/questions/877820/what-are-xhost-and-xhost-si
 
 if [ -v "$1" ]

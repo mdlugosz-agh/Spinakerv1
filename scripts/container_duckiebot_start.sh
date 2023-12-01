@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="duckietown/spinakerv1:v2-arm64v8"
+IMAGE_NAME="duckietown/spinakerv1:latest-arm64v8"
 RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
 RED='\033[0;32m'

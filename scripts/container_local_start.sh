@@ -1,12 +1,10 @@
 #!/bin/bash
 
-IMAGE_NAME="duckietown/spinakerv1:v2-amd64"
+IMAGE_NAME="duckietown/spinakerv1:latest-amd64"
 RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
 RED='\033[0;32m'
 NC='\033[0m' # No Color
-
-
 
 if [ -n "$1" ]
 then 
@@ -14,11 +12,11 @@ then
 
     # Set enviromental varaibles
     source "${RUN_PATH}/set_env.sh" ${1}
-
+    
     # Start container
     docker run -it --rm \
-        -v ${PWD}:/code/catkin_ws/src/SpinakerV1 \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
+        -v ${PWD}:/code/catkin_ws/src/SpinakerV1 \
         --network host \
         --privileged \
         -e ROS_MASTER_URI=${ROS_MASTER_URI} \

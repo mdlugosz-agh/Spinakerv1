@@ -45,7 +45,7 @@ class LateralPositionError(DTROS):
         self.error = {'raw' : None, 'norm' : None}
 
         # Subscribe to image topic
-        self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('~image/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
         self.pub_error = {
@@ -61,13 +61,16 @@ class LateralPositionError(DTROS):
 
     def callback(self, msg) -> None:
         try:
-            # Read image from node
+            # Read input image
+            # A - Place your code here
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-            # Convert to HSV color space
+            # Convert image to HSV color space
+            # B - Place your code here
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
             # Find follow line
+            # C - Place your code here
             #lower boundary
             lower_mask = cv2.inRange(hsv, 
                                      self.color_line_mask['lower1'], 
@@ -78,13 +81,17 @@ class LateralPositionError(DTROS):
                                      self.color_line_mask['upper2'])
             
             full_mask = lower_mask + upper_mask
+
+            # Mask image
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
-            # Cut image, only consider 75% of image area           
+            # Cut image, only consider 75% of image area
+            # D - Place your code here       
             full_mask[0:self.search_area.value['top'], 0:self.image_param.value['width']] = 0
             full_mask[self.search_area.value['bottom']:self.image_param.value['height'], 0:self.image_param.value['width']] = 0
             
             # Find center of mass detected red line
+            # E - Place your code here
             M = cv2.moments(full_mask)
             cx = 0.0
             cy = 0.0
@@ -92,11 +99,13 @@ class LateralPositionError(DTROS):
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
 
-            
+            # Estimate error
+            # F - Place your code here
             self.error['raw']  = cx - self.image_param.value['width']/2.0
             self.error['norm'] = self.normalize_factor * self.error['raw']
 
             # Publish error
+            # G - Place your code here
             self.pub_error['raw'].publish(Float32(self.error['raw']))
             self.pub_error['norm'].publish(Float32(self.error['norm']))
 

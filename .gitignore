@@ -8,3 +8,5 @@ html/*
 # otherwise CI thinks index not clean
 *.resolved
 *.bag
+assets/jupyter/.ipynb_checkpoints/model1-checkpoint.jpynb
+assets/jupyter/.ipynb_checkpoints/model1-checkpoint.ipynb

@@ -31,6 +31,9 @@ class NNController(DTROS):
         # Image gausian blur mask
         self.image_blur_ksize = DTParam('~image_blur_ksize', param_type=ParamType.DICT)
 
+        # Image crop 
+        self.image_crop = DTParam('~image_crop', param_type=ParamType.DICT)
+
         # Image resize
         self.image_resize =  DTParam('~image_resize', param_type=ParamType.DICT)
 
@@ -43,11 +46,11 @@ class NNController(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
 
         # Subscribe to image topic
-        self.image_sub = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
+        self.image_sub = rospy.Subscriber('~in/image/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-        self.img_pub = rospy.Publisher('~image1/out/compressed', CompressedImage, queue_size=1)
+        self.pub_debug_img = rospy.Publisher('~debug/image/compressed', CompressedImage, queue_size=1)
 
         # Model NN
         self.model = tf.keras.models.load_model(self.nn_model_path.value + '/' + self.nn_model_name.value)
@@ -63,7 +66,7 @@ class NNController(DTROS):
             
             # Image processing            
             # Crop image
-            image = img_org[300:500, :, :]
+            image = img_org[self.image_crop.value['start']:self.image_crop.value['stop'], :, :]
 
             # Filter image
             image = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
@@ -87,15 +90,18 @@ class NNController(DTROS):
             # Publish controlll
             self.control_pub.publish(self.twist)
 
-            # Publish transformed image
-            # Add error value to image
-            cv2.putText(img_org, 
-                "Controll= " + str(self.twist.omega), 
-                org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
-                thickness=1, lineType=cv2.LINE_AA)
-            out_image = self.cvbridge.cv2_to_compressed_imgmsg(img_org, 'jpg')
-            out_image.header.stamp = rospy.Time.now()
-            self.img_pub.publish(out_image)
+            # Publish transformed image and add error value to image
+            # DEBUG
+            if self.pub_debug_img.anybody_listening():
+                # Publish transformed image
+                # Add error value to image
+                cv2.putText(img_org, 
+                    "Controll= " + str( "%.3f" % self.twist.omega), 
+                    org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,255,0), fontScale=0.5, 
+                    thickness=1, lineType=cv2.LINE_AA)
+                out_image = self.cvbridge.cv2_to_compressed_imgmsg(img_org, 'jpg')
+                out_image.header.stamp = rospy.Time.now()
+                self.pub_debug_img.publish(out_image)
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))

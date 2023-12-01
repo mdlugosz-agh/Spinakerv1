@@ -9,10 +9,13 @@
         <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
             
             <!-- Subscribe image from camera -->
-            <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
+            <remap from="~in/image/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
             <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />
+
+            <!-- Publish image to debug subject -->
+            <remap from="~debug/image/compressed" to="/$(arg veh)/$(arg node_name)/debug/image/compressed" />
 
             <!-- Load default values -->
             <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />

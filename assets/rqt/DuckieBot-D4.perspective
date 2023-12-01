@@ -331,7 +331,7 @@
             "plugin": {
               "keys": {
                 "publishers": {
-                  "repr": "\"[{'topic_name': '/d2/wheels_driver_node/emergency_stop', 'type_name': 'duckietown_msgs/BoolStamped', 'rate': 10.0, 'enabled': False, 'publisher_id': 0, 'counter': 53, 'expressions': {'/d2/wheels_driver_node/emergency_stop/data': 'True'}}, {'topic_name': '/d4/joy_mapper_node/car_cmd', 'type_name': 'duckietown_msgs/Twist2DStamped', 'rate': 20.0, 'enabled': False, 'publisher_id': 1, 'counter': 0, 'expressions': {}}]\"",
+                  "repr": "\"[{'topic_name': '/d4/wheels_driver_node/emergency_stop', 'type_name': 'duckietown_msgs/BoolStamped', 'rate': 10.0, 'enabled': False, 'publisher_id': 0, 'counter': 53, 'expressions': {'/d4/wheels_driver_node/emergency_stop/data': 'True'}}, {'topic_name': '/d4/joy_mapper_node/car_cmd', 'type_name': 'duckietown_msgs/Twist2DStamped', 'rate': 20.0, 'enabled': False, 'publisher_id': 1, 'counter': 0, 'expressions': {}}]\"",
                   "type": "repr"
                 }
               },

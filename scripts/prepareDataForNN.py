@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 Script export from rosbag file data as car_cmd.v, car_cmd.omega and image from camera
-Usage: prepareDataForNN <rosbag_file 1> <rosbag_file 2>  <car_cmd topic name> <image compressed topic name> <imag save path>
+Usage: prepareDataForNN <rosbag_file 1> <rosbag_file 2> <imag save path>
 '''
 import rosbag
 import sys
@@ -15,11 +15,9 @@ import csv
 try:
     rosbag_path_left    = sys.argv[1]
     rosbag_path_right   = sys.argv[2]
-    car_cmd_topic       = sys.argv[3]
-    image_topic         = sys.argv[4]
-    data_save_path      = sys.argv[5]
+    data_save_path      = sys.argv[3]
 except Exception:
-    print("prepareDataForNN <rosbag_file-left> <rosbag_file-right>  <car_cmd topic name> <image compressed topic name> <img save path>")
+    print("prepareDataForNN <rosbag_file-left> <rosbag_file-right>")
     exit(0)
 
 @dataclass
@@ -32,6 +30,10 @@ class CarCmdImage:
 car_cmd_messages = {}
 # Image counter
 img_count = 0
+
+# Set topic to prepare
+car_cmd_topic =  '/' + os.environ['VEHICLE_NAME'] + '/data_sync_node/out/car_cmd'
+image_topic = '/' + os.environ['VEHICLE_NAME'] + '/data_sync_node/out/image/compressed'
 
 for rosbag_path in [rosbag_path_left, rosbag_path_right]:
     with rosbag.Bag(rosbag_path, 'r') as bag:
@@ -78,3 +80,10 @@ with open(data_save_path + "/data.csv", 'w', encoding='UTF8') as f:
 
 # Summary
 print("Exported: {} messages to directory: {}".format( img_count,  data_save_path))
+
+# Compress files
+os.system('tar -cf ' + data_save_path + '/data_nn.tar -C ' + data_save_path + ' img/ data.csv')
+
+if 'USER_ID' in os.environ and 'GROUP_ID' in os.environ:
+    # Update permission to file and directory
+    os.system('chown -R ' + os.environ['USER_ID'] + ':' + os.environ['GROUP_ID'] + ' ' + data_save_path)
